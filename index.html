@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>clicker</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div id="app">
+    <h1>Clicker</h1>
+    <div id="top-bar">
+      <button id="darkToggle">🌙</button>
+      <button id="muteToggle">🔊</button>
+    </div>
+    <img id="clickBtn" src="/static/click.png" />
+    <audio id="clickSound" src="/static/click.mp3"></audio>
+    <p id="clicks">Clicks: 0</p>
+    <input id="username" placeholder="Username" />
+    <button id="send">Send Clicks</button>
+    <h2>Leaderboard</h2>
+    <ul id="board"></ul>
+  </div>
+  <script>
+    let clicks = 0, muted = false, dark = false
+    const btn = document.getElementById("clickBtn")
+    const snd = document.getElementById("clickSound")
+    const count = document.getElementById("clicks")
+    const muteBtn = document.getElementById("muteToggle")
+    const darkBtn = document.getElementById("darkToggle")
+    const user = document.getElementById("username")
+    const board = document.getElementById("board")
+    btn.onclick = () => {
+      if (!muted) snd.play()
+      clicks++
+      count.innerText = "Clicks: " + clicks
+    }
+    muteBtn.onclick = () => {
+      muted = !muted
+      muteBtn.innerText = muted ? "🔇" : "🔊"
+    }
+    darkBtn.onclick = () => {
+      dark = !dark
+      document.body.classList.toggle("dark", dark)
+    }
+    document.getElementById("send").onclick = () => {
+      fetch("/click", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({username: user.value, clicks})
+      }).then(() => {
+        clicks = 0
+        count.innerText = "Clicks: 0"
+        loadBoard()
+      })
+    }
+    function loadBoard() {
+      fetch("/leaderboard").then(r => r.json()).then(data => {
+        board.innerHTML = ""
+        for (const [name, score] of Object.entries(data)) {
+          const li = document.createElement("li")
+          li.innerText = `${name}: ${score}`
+          board.appendChild(li)
+        }
+      })
+    }
+    loadBoard()
+  </script>
+</body>
+</html>
